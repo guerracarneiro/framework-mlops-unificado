@@ -1,0 +1,18 @@
+# =========================================================
+# CONFIGURAÇÃO DO SCORE FINAL
+# ESTUDO DE CASO 1 — SEGMENTAÇÃO DE CLONES
+# =========================================================
+
+pesos:
+  silhouette: 1.0
+  dbcv: 1.0
+  db_inv: 1.0
+
+penalidade_ruido:
+  limiar: 0.20
+  peso: 1.0
+  expoente: 2
+
+penalidade_k:
+  faixa_ideal: [3, 8]
+  peso: 0.05

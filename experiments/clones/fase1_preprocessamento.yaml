@@ -1,0 +1,104 @@
+# =========================================================
+# FASE 1 — AVALIAÇÃO DE ESTRATÉGIAS DE PREPROCESSAMENTO
+# =========================================================
+
+projeto:
+  nome_experimento_mlflow: "clones_fase1_preprocessamento"
+  tracking_uri: "sqlite:///mlflow.db"
+  semente_global: 30
+
+dados:
+  caminho_excel: "data/raw/clones/DadosCaracterizacao.xlsx"
+  aba: "Plan1"
+  id_columns: ["TT", "MATGEN"]
+
+preprocessamento:
+
+  # -------------------------
+  # Etapas FIXAS (controle)
+  # -------------------------
+
+  colunas_para_remover: ["ARV", "PROC", "Q_GLIC"]
+
+  padronizacoes:
+    especie_replace:
+      URO: "URO_X_URO"
+      ESPP: "GRA"
+
+  filtros:
+    especies_para_excluir: ["PEL_X_GRA", "TOR_X_CIT", "URO_X_GLO", "URO_X_PEL"]
+    idade_min: 5.5
+    idade_max: 8.5
+
+  outliers:
+    tipo: "nenhum"
+
+  normalizacao:
+    tipo: "standard"
+
+  selecao_variaveis:
+    tipo: "nenhum"
+
+  # -------------------------
+  # Etapas VARIÁVEIS
+  # -------------------------
+
+  grid_preprocessamento:
+    imputacao:
+      - tipo: "nenhuma"
+      - tipo: "mediana"
+      - tipo: "media70_mais_knn"
+        params:
+          limiar_preenchimento_grupo: 0.70
+          n_vizinhos_knn: 5
+
+    onehot:
+      - colunas: []
+      - colunas: ["REGIAO"]
+      - colunas: ["ESPECIE", "REGIAO"]
+
+# =========================================================
+# MODELAGEM FIXA (FASE 1)
+# =========================================================
+
+modelagem:
+  reducer:
+    name: "umap"
+    params:
+      n_neighbors: 15
+      n_components: 10
+      min_dist: 0.05
+      metric: "euclidean"
+      random_state: 30
+
+  clusterer:
+    name: "hdbscan"
+    params:
+      min_cluster_size: 5
+      min_samples: 3
+      cluster_selection_epsilon: 0.1
+      metric: "euclidean"
+
+# =========================================================
+# CRITÉRIO DE AVALIAÇÃO
+# =========================================================
+
+criterios:
+  caminho_score_final: "experiments/clones/criterios/score_final.yaml"
+
+# =========================================================
+# SAÍDAS
+# =========================================================
+
+saidas:
+  pasta_artefatos: "artifacts/clones/fase1_preprocessamento"
+  salvar_base_processada: true
+  salvar_resultado_amostras: true
+  salvar_embedding: false
+
+# =========================================================
+# CONTROLE DE EXECUÇÃO
+# =========================================================
+
+execucao:
+  limitar_execucoes_teste: 1
