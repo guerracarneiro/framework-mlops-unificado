@@ -27,16 +27,6 @@ def contar_clusters_validos(
 ) -> int:
     """
     Conta a quantidade de clusters válidos, desconsiderando o rótulo de ruído (-1).
-
-    Parâmetros
-    ----------
-    labels : np.ndarray
-        Vetor de rótulos da clusterização.
-
-    Retorno
-    -------
-    int
-        Quantidade de clusters válidos.
     """
     labels = np.asarray(labels)
     labels_validos = labels[labels != -1]
@@ -48,16 +38,6 @@ def calcular_percentual_ruido(
 ) -> float:
     """
     Calcula o percentual de amostras marcadas como ruído.
-
-    Parâmetros
-    ----------
-    labels : np.ndarray
-        Vetor de rótulos da clusterização.
-
-    Retorno
-    -------
-    float
-        Percentual de ruído no intervalo [0, 1].
     """
     labels = np.asarray(labels)
 
@@ -73,19 +53,6 @@ def filtrar_ruido(
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Remove amostras rotuladas como ruído e retorna a matriz e os rótulos filtrados.
-
-    Parâmetros
-    ----------
-    matriz_reduzida : np.ndarray
-        Matriz de entrada após redução de dimensionalidade.
-    labels : np.ndarray
-        Vetor de rótulos da clusterização.
-
-    Retorno
-    -------
-    tuple[np.ndarray, np.ndarray]
-        - matriz sem ruído
-        - labels sem ruído
     """
     labels = np.asarray(labels)
     mascara_validos = labels != -1
@@ -94,29 +61,6 @@ def filtrar_ruido(
     labels_filtrados = labels[mascara_validos]
 
     return matriz_filtrada, labels_filtrados
-
-
-def existe_quantidade_minima_para_metricas(
-    labels: np.ndarray,
-) -> bool:
-    """
-    Verifica se existe quantidade mínima de clusters para cálculo das métricas internas.
-
-    As métricas silhouette, Davies-Bouldin e Calinski-Harabasz exigem pelo menos
-    dois clusters válidos.
-
-    Parâmetros
-    ----------
-    labels : np.ndarray
-        Vetor de rótulos da clusterização.
-
-    Retorno
-    -------
-    bool
-        Indica se o cálculo das métricas é viável.
-    """
-    quantidade_clusters = contar_clusters_validos(labels)
-    return quantidade_clusters >= 2
 
 
 def calcular_metricas_internas(
@@ -128,28 +72,8 @@ def calcular_metricas_internas(
     Calcula métricas internas de clusterização.
 
     Quando `remover_ruido=True`, remove amostras com rótulo -1 antes do cálculo.
-    Isso é especialmente útil para resultados do HDBSCAN.
-
-    Métricas calculadas:
-    - silhouette
-    - davies_bouldin
-    - calinski_harabasz
-    - k
-    - noise_pct
-
-    Parâmetros
-    ----------
-    matriz_reduzida : np.ndarray
-        Matriz de entrada após redução de dimensionalidade.
-    labels : np.ndarray
-        Vetor de rótulos da clusterização.
-    remover_ruido : bool
-        Indica se amostras com rótulo -1 devem ser removidas antes do cálculo.
-
-    Retorno
-    -------
-    dict[str, float]
-        Dicionário com métricas internas.
+    Isso é especialmente útil para silhouette, Davies-Bouldin e Calinski-Harabasz
+    em resultados do HDBSCAN.
     """
     labels = np.asarray(labels)
 
@@ -208,22 +132,11 @@ def calcular_dbcv(
     """
     Calcula o índice DBCV quando aplicável.
 
-    O DBCV é mais coerente para métodos baseados em densidade, especialmente HDBSCAN.
+    Estratégia alinhada ao projeto original:
+    1. tenta calcular usando os labels completos, inclusive ruído;
+    2. se falhar, tenta novamente removendo ruído.
+
     Quando o cálculo não for possível, retorna NaN.
-
-    Parâmetros
-    ----------
-    matriz_reduzida : np.ndarray
-        Matriz de entrada após redução de dimensionalidade.
-    labels : np.ndarray
-        Vetor de rótulos da clusterização.
-    tipo_clusterizador : str
-        Nome do clusterizador utilizado.
-
-    Retorno
-    -------
-    float
-        Valor do DBCV ou NaN.
     """
     if validity_index is None:
         return np.nan
@@ -233,12 +146,27 @@ def calcular_dbcv(
 
     labels = np.asarray(labels)
 
+    if contar_clusters_validos(labels) < 2:
+        return np.nan
+
+    # Tentativa 1: com ruído
     try:
-        k = contar_clusters_validos(labels)
-        if k < 2:
+        valor_dbcv = validity_index(matriz_reduzida, labels)
+        return float(valor_dbcv)
+    except Exception:
+        pass
+
+    # Tentativa 2: sem ruído
+    try:
+        matriz_sem_ruido, labels_sem_ruido = filtrar_ruido(matriz_reduzida, labels)
+
+        if len(labels_sem_ruido) == 0:
             return np.nan
 
-        valor_dbcv = validity_index(matriz_reduzida, labels)
+        if len(np.unique(labels_sem_ruido)) < 2:
+            return np.nan
+
+        valor_dbcv = validity_index(matriz_sem_ruido, labels_sem_ruido)
         return float(valor_dbcv)
     except Exception:
         return np.nan
@@ -252,21 +180,35 @@ def calcular_inverso_davies_bouldin(
 
     A transformação adotada é:
         1 / (1 + davies_bouldin)
-
-    Parâmetros
-    ----------
-    davies_bouldin : float
-        Valor do índice Davies-Bouldin.
-
-    Retorno
-    -------
-    float
-        Valor transformado ou NaN.
     """
     if davies_bouldin is None or np.isnan(davies_bouldin):
         return np.nan
 
     return float(1.0 / (1.0 + davies_bouldin))
+
+
+def normalizar_silhouette(
+    silhouette: float,
+) -> float:
+    """
+    Normaliza silhouette do intervalo [-1, 1] para [0, 1].
+    """
+    if silhouette is None or np.isnan(silhouette):
+        return np.nan
+
+    return float((silhouette + 1.0) / 2.0)
+
+
+def normalizar_dbcv(
+    dbcv: float,
+) -> float:
+    """
+    Normaliza DBCV do intervalo [-1, 1] para [0, 1].
+    """
+    if dbcv is None or np.isnan(dbcv):
+        return np.nan
+
+    return float((dbcv + 1.0) / 2.0)
 
 
 def calcular_penalidade_ruido_hdbscan(
@@ -276,24 +218,8 @@ def calcular_penalidade_ruido_hdbscan(
     """
     Calcula penalidade associada ao percentual de ruído no HDBSCAN.
 
-    A fórmula considera:
-    - limiar tolerado;
-    - peso da penalidade;
-    - expoente da penalidade.
-
-    Quando o percentual de ruído estiver abaixo do limiar, a penalidade é zero.
-
-    Parâmetros
-    ----------
-    noise_pct : float
-        Percentual de ruído no intervalo [0, 1].
-    cfg_score : dict[str, Any]
-        Configuração do score final.
-
-    Retorno
-    -------
-    float
-        Penalidade calculada.
+    Fórmula:
+        penalidade = peso * max(0, noise_pct - limiar) ** expoente
     """
     penal_cfg = cfg_score.get("penalidade_ruido", {})
 
@@ -314,25 +240,14 @@ def calcular_penalidade_k(
     """
     Calcula penalidade associada à quantidade de clusters fora da faixa ideal.
 
-    Quando o valor de k estiver dentro do intervalo ideal, a penalidade é zero.
-    Fora desse intervalo, aplica penalidade proporcional à distância até a faixa.
-
-    Parâmetros
-    ----------
-    k : float
-        Quantidade de clusters válidos.
-    cfg_score : dict[str, Any]
-        Configuração do score final.
-
-    Retorno
-    -------
-    float
-        Penalidade calculada.
+    Fórmula alinhada ao comportamento esperado do projeto:
+        penalidade = min(peso * distancia, max_penalidade)
     """
     penal_cfg = cfg_score.get("penalidade_k", {})
 
     faixa_ideal = penal_cfg.get("faixa_ideal", [3, 8])
     peso = penal_cfg.get("peso", 0.0)
+    max_penalidade = penal_cfg.get("max_penalidade", np.inf)
 
     if not isinstance(faixa_ideal, list) or len(faixa_ideal) != 2:
         return 0.0
@@ -347,6 +262,8 @@ def calcular_penalidade_k(
         distancia = 0.0
 
     penalidade = peso * distancia
+    penalidade = min(penalidade, max_penalidade)
+
     return float(penalidade)
 
 
@@ -358,28 +275,12 @@ def calcular_score_final(
     """
     Calcula o score composto final do experimento.
 
-    O score combina:
-    - silhouette
-    - DBCV
-    - inverso de Davies-Bouldin
-
-    E aplica penalidades:
-    - percentual de ruído, quando clusterizador for HDBSCAN;
-    - quantidade de clusters fora da faixa ideal.
-
-    Parâmetros
-    ----------
-    metricas : dict[str, float]
-        Dicionário com métricas calculadas.
-    cfg_score : dict[str, Any]
-        Configuração do score final.
-    tipo_clusterizador : str
-        Nome do clusterizador utilizado.
-
-    Retorno
-    -------
-    float
-        Score final calculado.
+    Estratégia alinhada ao projeto original:
+    - normaliza silhouette e DBCV para [0, 1]
+    - usa db_inv já em escala compatível
+    - calcula média ponderada apenas das métricas disponíveis
+    - aplica penalidades de ruído e de quantidade de clusters
+    - força o score final a ser >= 0
     """
     pesos = cfg_score.get("pesos", {})
 
@@ -390,18 +291,28 @@ def calcular_score_final(
     silhouette = metricas.get("silhouette", np.nan)
     dbcv = metricas.get("dbcv", np.nan)
     davies_bouldin = metricas.get("davies_bouldin", np.nan)
+
+    sil_norm = normalizar_silhouette(silhouette)
+    dbcv_norm = normalizar_dbcv(dbcv)
     db_inv = calcular_inverso_davies_bouldin(davies_bouldin)
 
-    score_base = 0.0
+    componentes: list[tuple[float, float]] = []
 
-    if not np.isnan(silhouette):
-        score_base += peso_silhouette * silhouette
+    if not np.isnan(sil_norm):
+        componentes.append((peso_silhouette, sil_norm))
 
-    if not np.isnan(dbcv):
-        score_base += peso_dbcv * dbcv
+    if not np.isnan(dbcv_norm):
+        componentes.append((peso_dbcv, dbcv_norm))
 
     if not np.isnan(db_inv):
-        score_base += peso_db_inv * db_inv
+        componentes.append((peso_db_inv, db_inv))
+
+    if componentes:
+        soma_pesos = sum(peso for peso, _ in componentes)
+        soma_ponderada = sum(peso * valor for peso, valor in componentes)
+        score_base = soma_ponderada / soma_pesos
+    else:
+        score_base = 0.0
 
     noise_pct = metricas.get("noise_pct", 0.0)
     k = metricas.get("k", 0.0)
@@ -412,7 +323,7 @@ def calcular_score_final(
 
     penalidade_k = calcular_penalidade_k(k, cfg_score)
 
-    score_final = score_base - penalidade_ruido - penalidade_k
+    score_final = max(0.0, score_base - penalidade_ruido - penalidade_k)
 
     return float(score_final)
 
@@ -428,29 +339,15 @@ def avaliar_resultado_clusterizacao(
 
     Métricas retornadas:
     - silhouette
+    - silhouette_norm
     - davies_bouldin
     - calinski_harabasz
     - dbcv
+    - dbcv_norm
     - k
     - noise_pct
     - db_inv
     - score_final
-
-    Parâmetros
-    ----------
-    matriz_reduzida : np.ndarray
-        Matriz de entrada após redução de dimensionalidade.
-    labels : np.ndarray
-        Vetor de rótulos da clusterização.
-    tipo_clusterizador : str
-        Nome do clusterizador utilizado.
-    cfg_score : dict[str, Any]
-        Configuração do score final.
-
-    Retorno
-    -------
-    dict[str, float]
-        Dicionário consolidado de métricas.
     """
     remover_ruido = tipo_clusterizador.lower() == "hdbscan"
 
@@ -464,6 +361,14 @@ def avaliar_resultado_clusterizacao(
         matriz_reduzida=matriz_reduzida,
         labels=labels,
         tipo_clusterizador=tipo_clusterizador,
+    )
+
+    metricas["silhouette_norm"] = normalizar_silhouette(
+        metricas.get("silhouette", np.nan)
+    )
+
+    metricas["dbcv_norm"] = normalizar_dbcv(
+        metricas.get("dbcv", np.nan)
     )
 
     metricas["db_inv"] = calcular_inverso_davies_bouldin(
