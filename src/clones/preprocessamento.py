@@ -93,6 +93,49 @@ def filtrar_especies(
     return df_saida.reset_index(drop=True)
 
 
+def converter_coluna_idade_para_numerico(
+    df: pd.DataFrame,
+    coluna_idade: str = "IDADE",
+) -> pd.DataFrame:
+    """
+    Converte a coluna de idade para formato numérico.
+
+    A função trata cenários em que a coluna venha como texto com vírgula decimal.
+
+    Parâmetros
+    ----------
+    df : pd.DataFrame
+        DataFrame de entrada.
+    coluna_idade : str
+        Nome da coluna de idade.
+
+    Retorno
+    -------
+    pd.DataFrame
+        DataFrame com a coluna de idade convertida quando aplicável.
+    """
+    df_saida = df.copy()
+
+    if coluna_idade not in df_saida.columns:
+        return df_saida
+
+    serie_idade = df_saida[coluna_idade]
+
+    if pd.api.types.is_numeric_dtype(serie_idade):
+        df_saida[coluna_idade] = pd.to_numeric(serie_idade, errors="coerce")
+        return df_saida
+
+    serie_idade = (
+        serie_idade.astype(str)
+        .str.strip()
+        .str.replace(",", ".", regex=False)
+    )
+
+    df_saida[coluna_idade] = pd.to_numeric(serie_idade, errors="coerce")
+
+    return df_saida
+
+
 def filtrar_idade(
     df: pd.DataFrame,
     idade_min: float | None = None,
@@ -123,7 +166,11 @@ def filtrar_idade(
     if coluna_idade not in df_saida.columns:
         return df_saida
 
-    df_saida[coluna_idade] = pd.to_numeric(df_saida[coluna_idade], errors="coerce")
+    df_saida = converter_coluna_idade_para_numerico(
+        df_saida,
+        coluna_idade=coluna_idade,
+    )
+
     df_saida = df_saida.dropna(subset=[coluna_idade]).copy()
 
     if idade_min is not None:
@@ -199,7 +246,8 @@ def aplicar_onehot(
     """
     Aplica codificação one-hot nas colunas categóricas informadas.
 
-    Quando a lista de colunas estiver vazia, retorna uma cópia do DataFrame.
+    Quando a lista de colunas estiver vazia, retorna um DataFrame vazio
+    com o mesmo índice do DataFrame de entrada.
 
     Parâmetros
     ----------
@@ -211,18 +259,20 @@ def aplicar_onehot(
     Retorno
     -------
     pd.DataFrame
-        DataFrame com codificação aplicada.
+        DataFrame contendo apenas as colunas one-hot geradas.
     """
     if not colunas:
-        return df.copy()
+        return pd.DataFrame(index=df.index)
 
     colunas_validas = [col for col in colunas if col in df.columns]
 
     if not colunas_validas:
-        return df.copy()
+        return pd.DataFrame(index=df.index)
+
+    df_categorico = df[colunas_validas].copy()
 
     df_saida = pd.get_dummies(
-        df,
+        df_categorico,
         columns=colunas_validas,
         drop_first=False,
         dtype=float,
@@ -270,6 +320,7 @@ def imputar_sem_imputacao(
     """
     df_saida = df.dropna(axis=0).copy()
     return df_saida
+
 
 def imputar_mediana(
     df: pd.DataFrame,
@@ -386,6 +437,7 @@ def imputar_media70_mais_knn(
 
     return df_imputado
 
+
 def aplicar_imputacao(
     df: pd.DataFrame,
     config_imputacao: dict[str, Any],
@@ -432,12 +484,13 @@ def aplicar_imputacao(
 
     raise ValueError(f"Tipo de imputação não suportado: {tipo_imputacao}")
 
+
 def normalizar_dados(
     df: pd.DataFrame,
     tipo: str = "standard",
 ) -> tuple[pd.DataFrame, Any]:
     """
-    Aplica normalização nas colunas numéricas.
+    Aplica normalização nas colunas numéricas contínuas.
 
     Estratégias suportadas:
     - standard
@@ -470,6 +523,42 @@ def normalizar_dados(
     return df_normalizado, normalizador
 
 
+def concatenar_blocos_modelagem(
+    df_numerico: pd.DataFrame,
+    df_onehot: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Concatena a base numérica tratada com as colunas one-hot.
+
+    A concatenação preserva o índice e mantém as colunas one-hot sem normalização,
+    reproduzindo a lógica do projeto original.
+
+    Parâmetros
+    ----------
+    df_numerico : pd.DataFrame
+        Base numérica já imputada e normalizada.
+    df_onehot : pd.DataFrame
+        Base one-hot gerada a partir das colunas categóricas selecionadas.
+
+    Retorno
+    -------
+    pd.DataFrame
+        Matriz final de features para modelagem.
+    """
+    if df_onehot.empty:
+        return df_numerico.copy()
+
+    df_saida = pd.concat(
+        [
+            df_numerico,
+            df_onehot.loc[df_numerico.index].copy(),
+        ],
+        axis=1,
+    )
+
+    return df_saida
+
+
 def alinhar_identificadores_apos_imputacao(
     df_id: pd.DataFrame,
     df_modelagem_resultante: pd.DataFrame,
@@ -497,6 +586,8 @@ def alinhar_identificadores_apos_imputacao(
     df_id_alinhado = df_id.loc[indices_resultantes].copy()
 
     return df_id_alinhado
+
+
 def executar_preprocessamento_fase1(
     df_modelagem: pd.DataFrame,
     config_preprocessamento: dict[str, Any],
@@ -506,10 +597,11 @@ def executar_preprocessamento_fase1(
     Executa o preprocessamento da Fase 1 e retorna a matriz final para modelagem.
 
     Etapas aplicadas:
-    - one-hot encoding;
-    - seleção de colunas numéricas;
-    - imputação;
-    - normalização.
+    - separação da base numérica;
+    - imputação da base numérica;
+    - normalização da base numérica;
+    - geração das colunas one-hot em paralelo;
+    - concatenação final dos blocos.
 
     Os índices originais são preservados ao longo de todo o fluxo para permitir
     alinhamento correto com o DataFrame de identificação.
@@ -532,30 +624,47 @@ def executar_preprocessamento_fase1(
     df_trabalho = df_modelagem.copy()
 
     colunas_onehot = config_preprocessamento.get("onehot", {}).get("colunas", [])
-    df_trabalho = aplicar_onehot(df_trabalho, colunas=colunas_onehot)
 
+    # Bloco numérico: apenas colunas numéricas da base original.
     df_numerico = selecionar_colunas_numericas(df_trabalho)
 
     if serie_grupo_imputacao is not None:
         serie_grupo_imputacao = serie_grupo_imputacao.loc[df_numerico.index]
 
     config_imputacao = config_preprocessamento.get("imputacao", {"tipo": "nenhuma"})
-    df_imputado = aplicar_imputacao(
+    df_numerico_imputado = aplicar_imputacao(
         df_numerico,
         config_imputacao=config_imputacao,
         serie_grupo=serie_grupo_imputacao,
     )
 
     tipo_normalizacao = config_preprocessamento.get("normalizacao", {}).get("tipo", "standard")
-    df_normalizado, normalizador = normalizar_dados(df_imputado, tipo=tipo_normalizacao)
+    df_numerico_normalizado, normalizador = normalizar_dados(
+        df_numerico_imputado,
+        tipo=tipo_normalizacao,
+    )
+
+    # Bloco categórico: one-hot gerado separadamente e sem normalização.
+    df_onehot = aplicar_onehot(df_trabalho, colunas=colunas_onehot)
+
+    # Alinha as colunas one-hot ao subconjunto final após eventual remoção de linhas.
+    if not df_onehot.empty:
+        df_onehot = df_onehot.loc[df_numerico_normalizado.index].copy()
+
+    df_features = concatenar_blocos_modelagem(
+        df_numerico=df_numerico_normalizado,
+        df_onehot=df_onehot,
+    )
 
     metadados = {
         "n_linhas_entrada": len(df_modelagem),
-        "n_linhas_saida": len(df_normalizado),
-        "n_colunas_saida": df_normalizado.shape[1],
+        "n_linhas_saida": len(df_features),
+        "n_colunas_saida": df_features.shape[1],
+        "n_colunas_numericas": df_numerico_normalizado.shape[1],
+        "n_colunas_onehot": df_onehot.shape[1],
         "imputacao_tipo": config_imputacao.get("tipo", "nenhuma"),
         "onehot_colunas": colunas_onehot,
         "normalizacao_tipo": tipo_normalizacao,
     }
 
-    return df_normalizado, metadados
+    return df_features, metadados
