@@ -193,8 +193,8 @@ def executar_pipeline_clones(
     )
 
     serie_grupo_imputacao = None
-    if "MATGEN" in df_id.columns:
-        serie_grupo_imputacao = df_id["MATGEN"].copy()
+    if "TT" in df_id.columns:
+        serie_grupo_imputacao = df_id["TT"].copy()
 
     # -----------------------------------------------------
     # 4. Preprocessamento da execução
@@ -260,6 +260,7 @@ def executar_pipeline_clones(
     # 9. Resumo consolidado da execução
     # -----------------------------------------------------
     parametros_execucao = extrair_parametros_execucao(config_unitaria)
+    colunas_features_finais = df_features.columns.tolist()
 
     resumo_execucao = {
         **parametros_execucao,
@@ -270,6 +271,8 @@ def executar_pipeline_clones(
         "n_amostras_bruto": len(df_bruto),
         "n_amostras_filtrado": len(df_filtrado),
         "n_amostras_resultado": len(df_resultado_amostras),
+        "n_colunas_features_finais": len(colunas_features_finais),
+        "colunas_features_finais": colunas_features_finais,
     }
 
     return {
