@@ -136,6 +136,10 @@ def calcular_dbcv(
     1. tenta calcular usando os labels completos, inclusive ruído;
     2. se falhar, tenta novamente removendo ruído.
 
+    Antes do cálculo, converte explicitamente:
+    - matriz_reduzida -> float64
+    - labels -> int64
+
     Quando o cálculo não for possível, retorna NaN.
     """
     if validity_index is None:
@@ -149,6 +153,10 @@ def calcular_dbcv(
     if contar_clusters_validos(labels) < 2:
         return np.nan
 
+    # Coerção explícita para compatibilidade com hdbscan.validity.validity_index
+    matriz_reduzida = np.asarray(matriz_reduzida, dtype=np.float64)
+    labels = np.asarray(labels, dtype=np.int64)
+
     # Tentativa 1: com ruído
     try:
         valor_dbcv = validity_index(matriz_reduzida, labels)
@@ -160,6 +168,9 @@ def calcular_dbcv(
     try:
         matriz_sem_ruido, labels_sem_ruido = filtrar_ruido(matriz_reduzida, labels)
 
+        matriz_sem_ruido = np.asarray(matriz_sem_ruido, dtype=np.float64)
+        labels_sem_ruido = np.asarray(labels_sem_ruido, dtype=np.int64)
+
         if len(labels_sem_ruido) == 0:
             return np.nan
 
@@ -170,7 +181,6 @@ def calcular_dbcv(
         return float(valor_dbcv)
     except Exception:
         return np.nan
-
 
 def calcular_inverso_davies_bouldin(
     davies_bouldin: float,
