@@ -32,6 +32,7 @@ mlflow.db
 # Mantém conteúdo real fora do Git, mas permite arquivos .dvc
 # =========================================================
 artifacts/**
+!artifacts/
 !artifacts/**/*.dvc
 
 # =========================================================
@@ -41,10 +42,16 @@ artifacts/**
 data/raw/**
 data/processed/**
 
+!data/raw/
+!data/raw/clones/
+!data/processed/
+!data/processed/clones/
+
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !data/raw/clones/.gitkeep
 !data/processed/clones/.gitkeep
+
 !data/raw/**/*.dvc
 !data/processed/**/*.dvc
 
