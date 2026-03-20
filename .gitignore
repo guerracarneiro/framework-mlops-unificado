@@ -29,12 +29,14 @@ mlflow.db
 
 # =========================================================
 # ARTEFATOS DE EXECUÇÃO
+# Mantém conteúdo real fora do Git, mas permite arquivos .dvc
 # =========================================================
-artifacts/
+artifacts/**
+!artifacts/**/*.dvc
 
 # =========================================================
 # DADOS
-# Mantém estrutura com .gitkeep, mas ignora conteúdo real
+# Mantém estrutura com .gitkeep e permite arquivos .dvc
 # =========================================================
 data/raw/**
 data/processed/**
@@ -43,6 +45,8 @@ data/processed/**
 !data/processed/.gitkeep
 !data/raw/clones/.gitkeep
 !data/processed/clones/.gitkeep
+!data/raw/**/*.dvc
+!data/processed/**/*.dvc
 
 # =========================================================
 # MODELOS E ARQUIVOS GERADOS
@@ -60,7 +64,7 @@ reports/*.parquet
 reports/*.json
 
 # =========================================================
-# DVC (preparação)
+# DVC
 # =========================================================
 .dvc/tmp/
 
