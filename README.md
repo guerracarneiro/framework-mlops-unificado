@@ -25,3 +25,19 @@ Python
 MLflow  
 Git / GitHub  
 DVC (adoção gradual)
+
+## Iniciar Ambiente
+
+1. Terminal > New Terminal (abrir novo terminal)
+2. Saida de ambientes VENV (comando: deactivate)
+3. conda activate mlops_clones (entrar no Conda)
+4. Entrar na pasta do projeto (FrameWork_MLOps_Unificado)
+5. git status (verificar se git ativo)
+
+## Rodar o Experimento
+
+python -m src.clones.run_experimento_clones --config experiments/clones/fase1_preprocessamento.yaml
+
+
+
+
