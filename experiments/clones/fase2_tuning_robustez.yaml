@@ -1,0 +1,92 @@
+# =========================================================
+# FASE 2 — TUNING INICIAL DO PIPELINE UMAP + HDBSCAN
+# =========================================================
+
+projeto:
+  nome_experimento_mlflow: "clones_fase2_tuning_robustez"
+  tracking_uri: "sqlite:///mlflow.db"
+  semente_global: 30
+
+dados:
+  caminho_excel: "data/raw/clones/DadosCaracterizacao.xlsx"
+  aba: "Plan1"
+  id_columns: ["TT", "MATGEN"]
+
+# =========================================================
+# PREPROCESSAMENTO FIXADO A PARTIR DA FASE 1
+# IMPORTANTE: preencher com a estratégia vencedora real
+# =========================================================
+preprocessamento:
+  colunas_para_remover: ["ARV", "PROC", "Q_GLIC"]
+
+  padronizacoes:
+    especie_replace:
+      URO: "URO_X_URO"
+      ESPP: "GRA"
+
+  filtros:
+    especies_para_excluir: ["PEL_X_GRA", "TOR_X_CIT", "URO_X_GLO", "URO_X_PEL"]
+    idade_min: 5.5
+    idade_max: 8.5
+
+  outliers:
+    tipo: "nenhum"
+
+  normalizacao:
+    tipo: "standard"
+
+  selecao_variaveis:
+    tipo: "nenhum"
+
+  imputacao:
+    tipo: "media70_mais_knn"
+    params:
+      limiar_preenchimento_grupo: 0.70
+      n_vizinhos_knn: 5
+
+  onehot:
+    colunas: ["ESPECIE", "REGIAO"]
+
+# =========================================================
+# GRID DE MODELAGEM — FASE 2
+# =========================================================
+modelagem:
+  grid_modelagem:
+    reducer:
+      name: "umap"
+      params:
+        n_neighbors: [10, 15, 30]
+        n_components: [10]
+        min_dist: [0.0, 0.05, 0.1]
+        metric: ["euclidean"]
+        random_state: [30]
+
+    clusterer:
+      name: "hdbscan"
+      params:
+        min_cluster_size: [5, 8, 10]
+        min_samples: [3, 5]
+        cluster_selection_epsilon: [0.5, 1.0]
+        metric: ["euclidean"]
+
+# =========================================================
+# CRITÉRIO DE AVALIAÇÃO
+# =========================================================
+criterios:
+  caminho_score_final: "experiments/clones/criterios/score_final.yaml"
+
+# =========================================================
+# SAÍDAS
+# =========================================================
+saidas:
+  pasta_artefatos: "artifacts/clones/fase2_tuning_robustez"
+  salvar_base_processada: false
+  salvar_resultado_amostras: true
+  salvar_embedding: false
+
+# =========================================================
+# CONTROLE DE EXECUÇÃO
+# =========================================================
+execucao:
+  limitar_execucoes_teste: null #coloque valores aqui pra restringir a quantidade de rodadas
+  fase_experimental: "fase2_tuning_robustez"

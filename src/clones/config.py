@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+import hashlib
+import json
 
 
 def carregar_yaml(caminho_arquivo: str | Path) -> dict[str, Any]:
@@ -235,11 +237,216 @@ def resumir_configuracao_unitaria(config_unitaria: dict[str, Any]) -> dict[str, 
 
     Útil para logs, debug e conferência das execuções.
     """
-    return {
+    resumo = {
         "indice_execucao": config_unitaria["execucao"]["indice_execucao"],
         "nome_execucao": config_unitaria["execucao"]["nome_execucao"],
+        "fase_experimental": config_unitaria["execucao"].get("fase_experimental"),
         "imputacao": config_unitaria["preprocessamento"]["imputacao"]["tipo"],
         "onehot_colunas": config_unitaria["preprocessamento"]["onehot"]["colunas"],
         "reducer": config_unitaria["modelagem"]["reducer"]["name"],
         "clusterer": config_unitaria["modelagem"]["clusterer"]["name"],
     }
+
+    if "hash_configuracao" in config_unitaria["execucao"]:
+        resumo["hash_configuracao"] = config_unitaria["execucao"]["hash_configuracao"]
+
+    resumo.update({
+        f"reducer__{chave}": valor
+        for chave, valor in config_unitaria["modelagem"]["reducer"].get("params", {}).items()
+    })
+
+    resumo.update({
+        f"clusterer__{chave}": valor
+        for chave, valor in config_unitaria["modelagem"]["clusterer"].get("params", {}).items()
+    })
+
+    return resumo
+def validar_config_experimento_fase2(config: dict[str, Any]) -> None:
+    """
+    Valida a estrutura mínima esperada para a Fase 2.
+
+    A Fase 2 fixa o preprocessamento e expande apenas a modelagem.
+    """
+    chaves_obrigatorias = [
+        "projeto",
+        "dados",
+        "preprocessamento",
+        "modelagem",
+        "criterios",
+        "saidas",
+        "execucao",
+    ]
+
+    for chave in chaves_obrigatorias:
+        if chave not in config:
+            raise KeyError(f"Bloco obrigatório ausente na configuração: '{chave}'")
+
+    if "grid_modelagem" not in config["modelagem"]:
+        raise KeyError("Chave obrigatória ausente: modelagem.grid_modelagem")
+
+    if "reducer" not in config["modelagem"]["grid_modelagem"]:
+        raise KeyError("Chave obrigatória ausente: modelagem.grid_modelagem.reducer")
+
+    if "clusterer" not in config["modelagem"]["grid_modelagem"]:
+        raise KeyError("Chave obrigatória ausente: modelagem.grid_modelagem.clusterer")
+
+    if "imputacao" not in config["preprocessamento"]:
+        raise KeyError("Chave obrigatória ausente: preprocessamento.imputacao")
+
+    if "onehot" not in config["preprocessamento"]:
+        raise KeyError("Chave obrigatória ausente: preprocessamento.onehot")
+
+
+def gerar_hash_configuracao(config_unitaria: dict[str, Any]) -> str:
+    """
+    Gera um hash curto e determinístico da configuração unitária.
+    """
+    texto_config = json.dumps(config_unitaria, sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.md5(texto_config.encode("utf-8")).hexdigest()[:12]
+
+
+def gerar_nome_execucao_fase2(
+    indice_execucao: int,
+    config_unitaria: dict[str, Any],
+) -> str:
+    """
+    Gera nome padronizado para runs da Fase 2.
+    """
+    imputacao = config_unitaria["preprocessamento"]["imputacao"]["tipo"]
+    colunas_onehot = config_unitaria["preprocessamento"]["onehot"]["colunas"]
+    nome_onehot = normalizar_nome_colunas_onehot(colunas_onehot)
+
+    reducer_params = config_unitaria["modelagem"]["reducer"]["params"]
+    clusterer_params = config_unitaria["modelagem"]["clusterer"]["params"]
+
+    nome_execucao = (
+        f"exec_{indice_execucao:03d}"
+        f"__imp_{imputacao}"
+        f"__{nome_onehot}"
+        f"__umap_nn{reducer_params.get('n_neighbors')}"
+        f"_nc{reducer_params.get('n_components')}"
+        f"_md{str(reducer_params.get('min_dist')).replace('.', 'p')}"
+        f"__hdb_mcs{clusterer_params.get('min_cluster_size')}"
+        f"_ms{clusterer_params.get('min_samples')}"
+        f"_eps{str(clusterer_params.get('cluster_selection_epsilon')).replace('.', 'p')}"
+        f"_seed{reducer_params.get('random_state')}"
+    )
+
+    return nome_execucao
+
+
+def expandir_grid_modelagem(config_base: dict[str, Any]) -> list[dict[str, Any]]:
+    """
+    Expande o grid de modelagem da Fase 2.
+
+    Nesta fase:
+    - preprocessamento fica fixo;
+    - apenas os hiperparâmetros de UMAP + HDBSCAN variam.
+    """
+    config_base = deepcopy(config_base)
+
+    grid_modelagem = config_base["modelagem"]["grid_modelagem"]
+
+    reducer_cfg = grid_modelagem["reducer"]
+    clusterer_cfg = grid_modelagem["clusterer"]
+
+    reducer_name = reducer_cfg["name"]
+    clusterer_name = clusterer_cfg["name"]
+
+    reducer_params = reducer_cfg["params"]
+    clusterer_params = clusterer_cfg["params"]
+
+    lista_n_neighbors = reducer_params.get("n_neighbors", [15])
+    lista_n_components = reducer_params.get("n_components", [10])
+    lista_min_dist = reducer_params.get("min_dist", [0.05])
+    lista_metric_reducer = reducer_params.get("metric", ["euclidean"])
+    lista_random_state = reducer_params.get("random_state", [30])
+
+    lista_min_cluster_size = clusterer_params.get("min_cluster_size", [5])
+    lista_min_samples = clusterer_params.get("min_samples", [3])
+    lista_cluster_selection_epsilon = clusterer_params.get("cluster_selection_epsilon", [1.0])
+    lista_metric_clusterer = clusterer_params.get("metric", ["euclidean"])
+
+    combinacoes = product(
+        lista_n_neighbors,
+        lista_n_components,
+        lista_min_dist,
+        lista_metric_reducer,
+        lista_random_state,
+        lista_min_cluster_size,
+        lista_min_samples,
+        lista_cluster_selection_epsilon,
+        lista_metric_clusterer,
+    )
+
+    configuracoes_unitarias: list[dict[str, Any]] = []
+
+    for indice, (
+        n_neighbors,
+        n_components,
+        min_dist,
+        metric_reducer,
+        random_state,
+        min_cluster_size,
+        min_samples,
+        cluster_selection_epsilon,
+        metric_clusterer,
+    ) in enumerate(combinacoes, start=1):
+
+        config_unitaria = deepcopy(config_base)
+
+        config_unitaria["modelagem"].pop("grid_modelagem", None)
+
+        config_unitaria["modelagem"]["reducer"] = {
+            "name": reducer_name,
+            "params": {
+                "n_neighbors": n_neighbors,
+                "n_components": n_components,
+                "min_dist": min_dist,
+                "metric": metric_reducer,
+                "random_state": random_state,
+            },
+        }
+
+        config_unitaria["modelagem"]["clusterer"] = {
+            "name": clusterer_name,
+            "params": {
+                "min_cluster_size": min_cluster_size,
+                "min_samples": min_samples,
+                "cluster_selection_epsilon": cluster_selection_epsilon,
+                "metric": metric_clusterer,
+            },
+        }
+
+        config_unitaria["execucao"]["indice_execucao"] = indice
+        config_unitaria["execucao"]["fase_experimental"] = config_unitaria["execucao"].get(
+            "fase_experimental",
+            "fase2_tuning_robustez"
+        )
+
+        nome_execucao = gerar_nome_execucao_fase2(indice, config_unitaria)
+        hash_configuracao = gerar_hash_configuracao(config_unitaria)
+
+        config_unitaria["execucao"]["nome_execucao"] = nome_execucao
+        config_unitaria["execucao"]["hash_configuracao"] = hash_configuracao
+
+        configuracoes_unitarias.append(config_unitaria)
+
+    return configuracoes_unitarias
+
+
+def preparar_configuracoes_fase2(
+    caminho_config_experimento: str | Path,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """
+    Carrega a configuração principal da Fase 2 e expande o grid de modelagem.
+    """
+    config_experimento = carregar_yaml(caminho_config_experimento)
+    validar_config_experimento_fase2(config_experimento)
+
+    caminho_score = config_experimento["criterios"]["caminho_score_final"]
+    config_score = carregar_config_score(caminho_score)
+
+    configuracoes_unitarias = expandir_grid_modelagem(config_experimento)
+
+    return configuracoes_unitarias, config_score
