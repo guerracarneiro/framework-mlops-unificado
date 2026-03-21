@@ -1,0 +1,6 @@
+outs:
+- md5: 49c3fa5145dc1196c96536394efda800.dir
+  size: 430332
+  nfiles: 28
+  hash: md5
+  path: fase1_preprocessamento
