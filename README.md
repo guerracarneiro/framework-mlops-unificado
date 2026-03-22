@@ -114,3 +114,6 @@ python -c "import pandas as pd; df=pd.read_csv('artifacts/clones/fase2_tuning_ro
 
 python -m src.clones.run_fase2b_robustez_multiseed --config experiments/clones/fase2b_robustez_multiseed.yaml
 
+## Rodar Experimento Final
+
+python -m src.clones.run_fase2_tuning_robustez --config experiments/clones/fase2c_config_final_artigo.yaml
