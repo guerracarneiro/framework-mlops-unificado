@@ -19,6 +19,7 @@ import hashlib
 import json
 
 
+
 def carregar_yaml(caminho_arquivo: str | Path) -> dict[str, Any]:
     """
     Carrega um arquivo YAML e retorna seu conteúdo como dicionário.
@@ -241,8 +242,8 @@ def resumir_configuracao_unitaria(config_unitaria: dict[str, Any]) -> dict[str, 
         "indice_execucao": config_unitaria["execucao"]["indice_execucao"],
         "nome_execucao": config_unitaria["execucao"]["nome_execucao"],
         "fase_experimental": config_unitaria["execucao"].get("fase_experimental"),
-        "imputacao": config_unitaria["preprocessamento"]["imputacao"]["tipo"],
-        "onehot_colunas": config_unitaria["preprocessamento"]["onehot"]["colunas"],
+        "nome_base_candidata": config_unitaria["execucao"].get("nome_base_candidata"),
+        "seed_execucao": config_unitaria["execucao"].get("seed_execucao"),
         "reducer": config_unitaria["modelagem"]["reducer"]["name"],
         "clusterer": config_unitaria["modelagem"]["clusterer"]["name"],
     }
@@ -448,5 +449,149 @@ def preparar_configuracoes_fase2(
     config_score = carregar_config_score(caminho_score)
 
     configuracoes_unitarias = expandir_grid_modelagem(config_experimento)
+
+    return configuracoes_unitarias, config_score
+
+def validar_config_experimento_fase2b(config: dict[str, Any]) -> None:
+    """
+    Valida a estrutura mínima esperada para a Fase 2B.
+
+    A Fase 2B fixa o preprocessamento e uma lista pequena de candidatas,
+    expandindo cada candidata por múltiplas seeds.
+    """
+    chaves_obrigatorias = [
+        "projeto",
+        "dados",
+        "preprocessamento",
+        "robustez",
+        "criterios",
+        "saidas",
+        "execucao",
+    ]
+
+    for chave in chaves_obrigatorias:
+        if chave not in config:
+            raise KeyError(f"Bloco obrigatório ausente na configuração: '{chave}'")
+
+    if "seeds" not in config["robustez"]:
+        raise KeyError("Chave obrigatória ausente: robustez.seeds")
+
+    if "configuracoes_candidatas" not in config["robustez"]:
+        raise KeyError("Chave obrigatória ausente: robustez.configuracoes_candidatas")
+
+    if not config["robustez"]["configuracoes_candidatas"]:
+        raise ValueError("A lista robustez.configuracoes_candidatas está vazia.")
+
+    for indice, candidata in enumerate(config["robustez"]["configuracoes_candidatas"], start=1):
+        if "nome_base" not in candidata:
+            raise KeyError(f"Candidata {indice} sem chave 'nome_base'.")
+        if "reducer" not in candidata:
+            raise KeyError(f"Candidata {indice} sem chave 'reducer'.")
+        if "clusterer" not in candidata:
+            raise KeyError(f"Candidata {indice} sem chave 'clusterer'.")
+
+
+def gerar_hash_configuracao_fase2b(config_unitaria: dict[str, Any]) -> str:
+    """
+    Gera um hash curto e determinístico da configuração unitária da Fase 2B.
+    """
+    texto_config = json.dumps(config_unitaria, sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.md5(texto_config.encode("utf-8")).hexdigest()[:12]
+
+
+def gerar_nome_execucao_fase2b(
+    indice_execucao: int,
+    config_unitaria: dict[str, Any],
+) -> str:
+    """
+    Gera um nome padronizado para execuções da Fase 2B.
+    """
+    nome_base = config_unitaria["execucao"]["nome_base_candidata"]
+
+    reducer_params = config_unitaria["modelagem"]["reducer"]["params"]
+    clusterer_params = config_unitaria["modelagem"]["clusterer"]["params"]
+
+    seed = reducer_params.get("random_state")
+
+    nome_execucao = (
+        f"exec_{indice_execucao:03d}"
+        f"__{nome_base}"
+        f"__umap_nn{reducer_params.get('n_neighbors')}"
+        f"_nc{reducer_params.get('n_components')}"
+        f"_md{str(reducer_params.get('min_dist')).replace('.', 'p')}"
+        f"__hdb_mcs{clusterer_params.get('min_cluster_size')}"
+        f"_ms{clusterer_params.get('min_samples')}"
+        f"_eps{str(clusterer_params.get('cluster_selection_epsilon')).replace('.', 'p')}"
+        f"_seed{seed}"
+    )
+
+    return nome_execucao
+
+
+def expandir_configuracoes_fase2b(config_base: dict[str, Any]) -> list[dict[str, Any]]:
+    """
+    Expande a Fase 2B em configurações unitárias.
+
+    Cada candidata é repetida para cada seed informada.
+    """
+    config_base = deepcopy(config_base)
+
+    seeds = config_base["robustez"]["seeds"]
+    candidatas = config_base["robustez"]["configuracoes_candidatas"]
+
+    configuracoes_unitarias: list[dict[str, Any]] = []
+    indice_execucao = 1
+
+    for candidata in candidatas:
+        nome_base = candidata["nome_base"]
+        reducer = deepcopy(candidata["reducer"])
+        clusterer = deepcopy(candidata["clusterer"])
+
+        for seed in seeds:
+            config_unitaria = deepcopy(config_base)
+
+            config_unitaria.pop("robustez", None)
+
+            config_unitaria["modelagem"] = {
+                "reducer": deepcopy(reducer),
+                "clusterer": deepcopy(clusterer),
+            }
+
+            config_unitaria["modelagem"]["reducer"].setdefault("params", {})
+            config_unitaria["modelagem"]["reducer"]["params"]["random_state"] = seed
+
+            config_unitaria["execucao"]["indice_execucao"] = indice_execucao
+            config_unitaria["execucao"]["fase_experimental"] = config_unitaria["execucao"].get(
+                "fase_experimental",
+                "fase2b_robustez_multiseed",
+            )
+            config_unitaria["execucao"]["nome_base_candidata"] = nome_base
+            config_unitaria["execucao"]["seed_execucao"] = seed
+
+            nome_execucao = gerar_nome_execucao_fase2b(indice_execucao, config_unitaria)
+            hash_configuracao = gerar_hash_configuracao_fase2b(config_unitaria)
+
+            config_unitaria["execucao"]["nome_execucao"] = nome_execucao
+            config_unitaria["execucao"]["hash_configuracao"] = hash_configuracao
+
+            configuracoes_unitarias.append(config_unitaria)
+            indice_execucao += 1
+
+    return configuracoes_unitarias
+
+
+def preparar_configuracoes_fase2b(
+    caminho_config_experimento: str | Path,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """
+    Carrega a configuração principal da Fase 2B e expande candidatas x seeds.
+    """
+    config_experimento = carregar_yaml(caminho_config_experimento)
+    validar_config_experimento_fase2b(config_experimento)
+
+    caminho_score = config_experimento["criterios"]["caminho_score_final"]
+    config_score = carregar_config_score(caminho_score)
+
+    configuracoes_unitarias = expandir_configuracoes_fase2b(config_experimento)
 
     return configuracoes_unitarias, config_score

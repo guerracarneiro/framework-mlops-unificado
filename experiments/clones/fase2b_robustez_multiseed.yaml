@@ -1,0 +1,89 @@
+projeto:
+  nome_experimento_mlflow: "clones_fase2b_robustez_multiseed"
+  tracking_uri: "sqlite:///mlflow.db"
+  semente_global: 30
+
+dados:
+  caminho_excel: "data/raw/clones/DadosCaracterizacao.xlsx"
+  aba: "Plan1"
+  id_columns: ["TT", "MATGEN"]
+
+preprocessamento:
+  colunas_para_remover: ["ARV", "PROC", "Q_GLIC"]
+
+  padronizacoes:
+    especie_replace:
+      URO: "URO_X_URO"
+      ESPP: "GRA"
+
+  filtros:
+    especies_para_excluir: ["PEL_X_GRA", "TOR_X_CIT", "URO_X_GLO", "URO_X_PEL"]
+    idade_min: 5.5
+    idade_max: 8.5
+
+  outliers:
+    tipo: "nenhum"
+
+  normalizacao:
+    tipo: "standard"
+
+  selecao_variaveis:
+    tipo: "nenhum"
+
+  imputacao:
+    tipo: "media70_mais_knn"
+    params:
+      limiar_preenchimento_grupo: 0.70
+      n_vizinhos_knn: 5
+
+  onehot:
+    colunas: ["ESPECIE", "REGIAO"]
+
+robustez:
+  seeds: [13, 21, 30, 42, 84]
+
+  configuracoes_candidatas:
+    - nome_base: "candidata_5_a"
+      reducer:
+        name: "umap"
+        params:
+          n_neighbors: 10
+          n_components: 10
+          min_dist: 0.0
+          metric: "euclidean"
+      clusterer:
+        name: "hdbscan"
+        params:
+          min_cluster_size: 5
+          min_samples: 3
+          cluster_selection_epsilon: 1.0
+          metric: "euclidean"
+
+    - nome_base: "candidata_5_b"
+      reducer:
+        name: "umap"
+        params:
+          n_neighbors: 15
+          n_components: 10
+          min_dist: 0.05
+          metric: "euclidean"
+      clusterer:
+        name: "hdbscan"
+        params:
+          min_cluster_size: 5
+          min_samples: 3
+          cluster_selection_epsilon: 1.0
+          metric: "euclidean"
+
+criterios:
+  caminho_score_final: "experiments/clones/criterios/score_final.yaml"
+
+saidas:
+  pasta_artefatos: "artifacts/clones/fase2b_robustez_multiseed"
+  salvar_resultado_amostras: true
+  salvar_embedding: false
+  salvar_base_processada: false
+
+execucao:
+  fase_experimental: "fase2b_robustez_multiseed"
+  limitar_execucoes_teste: null

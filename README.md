@@ -33,7 +33,8 @@ DVC (adoção gradual)
 3. conda activate mlops_clones (entrar no Conda)
 4. Entrar na pasta do projeto (cd FrameWork_MLOps_Unificado)
 5. git status (verificar se git ativo)
-6. ### Gerar Zip ###
+6. mlflow server --backend-store-uri sqlite:///mlflow.db --host 127.0.0.1 --port 5000 --workers 1 (ativar MLFLow)
+7. ### Gerar Zip ###
         $arquivoZip = "fase1_codigo_config.zip"
         $pastaTemp = "_tmp_zip_fase1"
 
@@ -105,5 +106,11 @@ python -m src.clones.run_experimento_clones --config experiments/clones/fase1_pr
 
 python -m src.clones.run_fase2_tuning_robustez --config experiments/clones/fase2_tuning_robustez.yaml
 
+## Seleciona Candidatos para testes de robustez multi-seed
 
+python -c "import pandas as pd; df=pd.read_csv('artifacts/clones/fase2_tuning_robustez/resumo_fase2_tuning_robustez.csv'); df5=df[df['n_clusters']==5].sort_values(['noise_pct','score_final'], ascending=[True,False]).head(2); df6=df[df['n_clusters']==6].sort_values(['noise_pct','score_final'], ascending=[True,False]).head(2); out=pd.concat([df5,df6], ignore_index=True); out.to_csv('artifacts/clones/fase2_tuning_robustez/candidatas_fase2b.csv', index=False, encoding='utf-8-sig'); print(out[['nome_execucao','score_final','noise_pct','n_clusters','reducer__n_neighbors','reducer__min_dist','clusterer__min_cluster_size','clusterer__min_samples','clusterer__cluster_selection_epsilon']].to_string(index=False))"
+
+## Rodar Experimento Fase 2B
+
+python -m src.clones.run_fase2b_robustez_multiseed --config experiments/clones/fase2b_robustez_multiseed.yaml
 
