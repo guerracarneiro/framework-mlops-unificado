@@ -1,0 +1,5 @@
+outs:
+- md5: acfafec600ec382acc0eb5064e490623
+  size: 123302
+  hash: md5
+  path: base_analitica_tratada.csv
