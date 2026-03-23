@@ -1,0 +1,6 @@
+outs:
+- md5: 69345e11873ceec5056868b18629fe87.dir
+  size: 764772
+  nfiles: 13
+  hash: md5
+  path: fase2d_sensibilidade_multicolinearidade

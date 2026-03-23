@@ -1,0 +1,30 @@
+projeto:
+  nome_experimento_mlflow: "clones_fase2d_artigo_replicado"
+  tracking_uri: "sqlite:///mlflow.db"
+  semente_global: 30
+
+base:
+  pasta_execucao_oficial: "artifacts/clones/fase2c_config_final/exec_001__imp_media70_mais_knn__onehot_especie_regiao__umap_nn15_nc10_md0p05__hdb_mcs5_ms3_eps1p0_seed30"
+  arquivo_base_tratada: "base_analitica_tratada.csv"
+  id_columns: ["TT", "MATGEN"]
+
+referencia:
+  labels_ref_csv: "artifacts/clones/fase2d_artigo_replicado/labels_ref_fase2c.csv"
+  config_melhor_json: "artifacts/clones/fase2d_artigo_replicado/config_melhor.json"
+
+execucao:
+  seeds_estabilidade: [13, 21, 30, 42, 84]
+  seed_preprocessamento: 30
+
+suites:
+  corr_pruning_sensitivity:
+    metodo: "spearman"
+    limiares_tau: [0.5, 0.6, 0.7, 0.8, 0.9]
+    repeticoes_por_tau: 5
+    seed_remocao_base: 30
+    bootstrap_n: 5000
+    gerar_pdf: true
+
+saidas:
+  pasta_artefatos: "artifacts/clones/fase2d_artigo_replicado"
+  pasta_reports: "reports/clones/fase2d_artigo_replicado"

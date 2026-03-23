@@ -122,7 +122,18 @@ python -m src.clones.run_fase2_tuning_robustez --config experiments/clones/fase2
 
 python -m src.clones.run_fase2c_caracterizacao_clusters
 
-## Rorar Finalização
+## Rorar Finalização Fase 2C
 
 python -m src.clones.run_fase2_tuning_robustez --config experiments/clones/fase2c_config_final_artigo.yaml
 
+## Rodar Fase 2D
+
+python -m src.clones.run_fase2d_sensibilidade_multicolinearidade --config experiments/clones/fase2d_sensibilidade_multicolinearidade.yaml
+
+## Rodada Gerador de Referências (artigo)
+
+python -m src.clones.gerar_referencia_fase2d_artigo --config-fase2d experiments/clones/fase2d_artigo_replicado.yaml
+
+## Rodar Multicolinearidade (artigo)
+
+python -m src.clones.run_fase2d_multicolinearidade_artigo --config experiments/clones/fase2d_artigo_replicado.yaml

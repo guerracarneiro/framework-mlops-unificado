@@ -1,0 +1,59 @@
+projeto:
+  nome_experimento_mlflow: "clones_fase2d_sensibilidade_multicolinearidade"
+  tracking_uri: "sqlite:///mlflow.db"
+  semente_global: 30
+
+referencia:
+  pasta_execucao_oficial: "artifacts/clones/fase2c_config_final/exec_001__imp_media70_mais_knn__onehot_especie_regiao__umap_nn15_nc10_md0p05__hdb_mcs5_ms3_eps1p0_seed30"
+  arquivo_base_tratada: "base_analitica_tratada.csv"
+  arquivo_resultado_amostras: "resultado_amostras.csv"
+  colunas_id: ["TT", "MATGEN"]
+  coluna_cluster_referencia: "cluster"
+
+preprocessamento:
+  onehot:
+    colunas: ["ESPECIE", "REGIAO"]
+  normalizacao:
+    tipo: "standard"
+
+sensibilidade_multicolinearidade:
+  metodo_correlacao: "spearman"   # ou "pearson"
+  incluir_referencia_sem_poda: true
+  limiares_correlacao_abs: [0.90, 0.80, 0.70, 0.60]
+  usar_apenas_bloco_numerico: true
+  estrategia_representante: "menor_redundancia_media"
+
+modelagem_oficial:
+  reducer:
+    name: "umap"
+    params:
+      n_neighbors: 15
+      n_components: 10
+      min_dist: 0.05
+      metric: "euclidean"
+
+  clusterer:
+    name: "hdbscan"
+    params:
+      min_cluster_size: 5
+      min_samples: 3
+      cluster_selection_epsilon: 1.0
+      metric: "euclidean"
+
+robustez:
+  seeds_umap: [13, 21, 30, 42, 84] #[30, 31, 32, 33, 34]
+
+criterios:
+  caminho_score_final: "experiments/clones/criterios/score_final.yaml"
+
+saidas:
+  pasta_artefatos: "artifacts/clones/fase2d_sensibilidade_multicolinearidade"
+  pasta_reports: "reports/clones/fase2d_sensibilidade_multicolinearidade"
+  salvar_resultado_amostras: true
+  salvar_embedding: true
+  salvar_features_mantidas: true
+  salvar_features_removidas: true
+
+execucao:
+  fase_experimental: "fase2d_sensibilidade_multicolinearidade"
+  limitar_execucoes_teste: null
