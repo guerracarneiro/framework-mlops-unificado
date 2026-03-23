@@ -89,3 +89,4 @@ reports/*.json
 .DS_Store
 Thumbs.db
 desktop.ini
+_handoff_chat/
