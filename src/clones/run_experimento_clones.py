@@ -177,6 +177,7 @@ def salvar_artefatos_locais_execucao(
 
     Artefatos salvos:
     - resultado por amostra em CSV;
+    - base analítica tratada em CSV, quando disponível;
     - embedding em CSV;
     - resumo da execução em JSON.
 
@@ -201,6 +202,17 @@ def salvar_artefatos_locais_execucao(
     df_resultado_amostras.to_csv(caminho_resultado_amostras, index=False, encoding="utf-8-sig")
     caminhos_artefatos["resultado_amostras_csv"] = caminho_resultado_amostras
 
+    # Salva a base analítica tratada, usada na interpretação final dos clusters.
+    if "df_base_analitica_tratada" in resultado_execucao:
+        df_base_analitica_tratada = resultado_execucao["df_base_analitica_tratada"]
+        caminho_base_analitica = pasta_execucao / "base_analitica_tratada.csv"
+        df_base_analitica_tratada.to_csv(
+            caminho_base_analitica,
+            index=False,
+            encoding="utf-8-sig",
+        )
+        caminhos_artefatos["base_analitica_tratada_csv"] = caminho_base_analitica
+
     df_embedding = resultado_execucao["df_embedding"]
     caminho_embedding = pasta_execucao / "embedding.csv"
     df_embedding.to_csv(caminho_embedding, index=False, encoding="utf-8-sig")
@@ -213,7 +225,6 @@ def salvar_artefatos_locais_execucao(
     caminhos_artefatos["resumo_execucao_json"] = caminho_resumo_json
 
     return caminhos_artefatos
-
 
 def registrar_artefatos_mlflow(
     caminhos_artefatos: dict[str, Path],

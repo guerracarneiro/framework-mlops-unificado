@@ -117,3 +117,12 @@ python -m src.clones.run_fase2b_robustez_multiseed --config experiments/clones/f
 ## Rodar Experimento Final
 
 python -m src.clones.run_fase2_tuning_robustez --config experiments/clones/fase2c_config_final_artigo.yaml
+
+## Rodar Caracterização
+
+python -m src.clones.run_fase2c_caracterizacao_clusters
+
+## Rorar Finalização
+
+python -m src.clones.run_fase2_tuning_robustez --config experiments/clones/fase2c_config_final_artigo.yaml
+

@@ -592,7 +592,7 @@ def executar_preprocessamento_fase1(
     df_modelagem: pd.DataFrame,
     config_preprocessamento: dict[str, Any],
     serie_grupo_imputacao: pd.Series | None = None,
-) -> tuple[pd.DataFrame, dict[str, Any]]:
+) -> tuple[pd.DataFrame, dict[str, Any], pd.DataFrame]:
     """
     Executa o preprocessamento da Fase 1 e retorna a matriz final para modelagem.
 
@@ -617,9 +617,11 @@ def executar_preprocessamento_fase1(
 
     Retorno
     -------
-    tuple[pd.DataFrame, dict[str, Any]]
-        - matriz final de features
+    tuple[pd.DataFrame, dict[str, Any], pd.DataFrame]
+        - matriz final de features para modelagem
         - metadados resumidos do preprocessamento
+        - base analítica tratada, com variáveis originais preservadas,
+          imputação aplicada e sem normalização/one-hot
     """
     df_trabalho = df_modelagem.copy()
 
@@ -637,6 +639,14 @@ def executar_preprocessamento_fase1(
         config_imputacao=config_imputacao,
         serie_grupo=serie_grupo_imputacao,
     )
+
+    # Base analítica tratada:
+    # - preserva as colunas originais de modelagem;
+    # - mantém o mesmo subconjunto de linhas válido para a modelagem;
+    # - substitui apenas as colunas numéricas pelos valores imputados;
+    # - não aplica normalização nem one-hot.
+    df_base_analitica_tratada = df_trabalho.loc[df_numerico_imputado.index].copy()
+    df_base_analitica_tratada[df_numerico_imputado.columns] = df_numerico_imputado
 
     tipo_normalizacao = config_preprocessamento.get("normalizacao", {}).get("tipo", "standard")
     df_numerico_normalizado, normalizador = normalizar_dados(
@@ -667,4 +677,6 @@ def executar_preprocessamento_fase1(
         "normalizacao_tipo": tipo_normalizacao,
     }
 
-    return df_features, metadados
+    return df_features, metadados, df_base_analitica_tratada
+
+    

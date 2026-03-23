@@ -199,7 +199,7 @@ def executar_pipeline_clones(
     # -----------------------------------------------------
     # 4. Preprocessamento da execução
     # -----------------------------------------------------
-    df_features, metadados_preprocessamento = executar_preprocessamento_fase1(
+    df_features, metadados_preprocessamento, df_base_analitica_tratada = executar_preprocessamento_fase1(
         df_modelagem=df_modelagem,
         config_preprocessamento=config_preprocessamento,
         serie_grupo_imputacao=serie_grupo_imputacao,
@@ -287,6 +287,7 @@ def executar_pipeline_clones(
         "df_filtrado": df_filtrado,
         "df_id_alinhado": df_id_alinhado,
         "df_features": df_features,
+        "df_base_analitica_tratada": df_base_analitica_tratada,
         "matriz_reduzida": matriz_reduzida,
         "df_embedding": df_embedding,
         "labels": labels,
