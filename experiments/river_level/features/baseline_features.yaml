@@ -1,0 +1,20 @@
+projeto:
+  nome_experimento: "river_level_fase2_features_baseline"
+
+dados:
+  caminho_base_processada: "data/processed/river_level/dataset_base_modelagem.csv"
+
+features:
+  coluna_nivel: "Nivel"
+  coluna_precipitacao: "Precip_Media_Estacoes"
+
+  janelas_nivel: [3, 7, 15]
+  defasagens: [1, 3, 7, 15, 30, 60, 90]
+  limiares_estiagem: [5, 10, 15]
+  fator_k_api: 0.92
+
+  remover_nans_finais: true
+
+saidas:
+  caminho_dataset_features: "data/processed/river_level/dataset_features_baseline_lstm.csv"
+  caminho_resumo_execucao: "artifacts/river_level/engenharia_features/resumo_features_baseline_lstm.json"

@@ -26,6 +26,11 @@ MLflow
 Git / GitHub  
 DVC (adoção gradual)
 
+==========================================================================================================
+## ESTUDO DE CASO 1
+==========================================================================================================
+
+
 ## Iniciar Ambiente
 
 1. Terminal > New Terminal (abrir novo terminal)
@@ -140,8 +145,14 @@ python -m src.clones.run_fase2d_multicolinearidade_artigo --config experiments/c
 
 
 ==========================================================================================================
+## ESTUDO DE CASO 2
 ==========================================================================================================
 
 
 ## Ativar Estudo de Caso 02 (mlops_river_level)
+
 conda activate mlops_river_level
+
+## 1- Executar Engenharia de Features
+
+python -m src.river_level.run_engenharia_features --config experiments/river_level/features/baseline_features.yaml
