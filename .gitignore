@@ -35,36 +35,40 @@ artifacts/**
 !artifacts/
 !artifacts/**/
 !artifacts/**/*.dvc
+!artifacts/**/.gitkeep
 
 # =========================================================
 # DADOS
-# Mantém estrutura com .gitkeep e permite arquivos .dvc
+# Mantém conteúdo real fora do Git, mas permite arquivos .dvc
+# e arquivos .gitkeep em qualquer subpasta
 # =========================================================
 data/raw/**
 data/processed/**
 
 !data/raw/
-!data/raw/clones/
-!data/processed/
-!data/processed/clones/
-
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-!data/raw/clones/.gitkeep
-!data/processed/clones/.gitkeep
-
+!data/raw/**/
 !data/raw/**/*.dvc
+!data/raw/**/.gitkeep
+
+!data/processed/
+!data/processed/**/
 !data/processed/**/*.dvc
+!data/processed/**/.gitkeep
 
 # =========================================================
 # MODELOS E ARQUIVOS GERADOS
+# Mantém estrutura, mas não versiona modelos/exportações
 # =========================================================
-models/*
-!models/.gitkeep
+models/**
+!models/
+!models/**/
+!models/**/.gitkeep
 
 *.pkl
 *.joblib
 *.parquet
+*.h5
+*.keras
 
 reports/*.csv
 reports/*.xlsx
@@ -75,6 +79,7 @@ reports/*.json
 # DVC
 # =========================================================
 .dvc/tmp/
+.dvc/cache/
 
 # =========================================================
 # LOGS E TEMPORÁRIOS
