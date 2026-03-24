@@ -1,0 +1,5 @@
+outs:
+- md5: 74dde96f9110ab31583bec7742d91c08
+  size: 222525
+  hash: md5
+  path: dataset_base_modelagem.csv
