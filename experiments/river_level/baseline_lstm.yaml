@@ -1,0 +1,49 @@
+projeto:
+  nome_experimento_mlflow: "river_level_baseline_lstm"
+  tracking_uri: "sqlite:///mlflow.db"
+  semente_global: 42
+
+dados:
+  caminho_arquivo: "data/raw/river_level/2021_NivelRD PIMS_Felipe_V01.xlsm"
+  aba_nivel: "BaseDados"
+  aba_clima: "Clima"
+  estacoes_precipitacao:
+    - "56550005"
+    - "56550017"
+    - "56550019"
+    - "56550021"
+
+preprocessamento:
+  data_inicio: "2005-01-01"
+  data_fim: "2025-06-30"
+  tratar_evento_2015: true
+
+features:
+  janelas_nivel: [3, 7, 15]
+  defasagens: [1, 3, 7, 15, 30, 60, 90]
+  limiares_estiagem: [5, 10, 15]
+  fator_k_api: 0.92
+
+sequencias:
+  passos_entrada: 180
+  horizonte_previsao: 1
+  proporcao_treino: 0.70
+  proporcao_validacao: 0.15
+  proporcao_teste: 0.15
+
+modelo:
+  tipo: "lstm"
+  unidades_lstm_1: 128
+  unidades_lstm_2: 64
+  dropout: 0.20
+  learning_rate: 0.001
+
+treinamento:
+  epochs: 150
+  batch_size: 32
+  patience_early_stopping: 15
+
+saidas:
+  pasta_artefatos: "artifacts/river_level/baseline_lstm"
+  pasta_modelos: "models/river_level"
+  pasta_relatorios: "reports/river_level"

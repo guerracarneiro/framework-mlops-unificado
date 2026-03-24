@@ -1,0 +1,22 @@
+name: mlops_river_level
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pandas
+  - numpy
+  - matplotlib
+  - plotly
+  - scikit-learn
+  - openpyxl
+  - pyyaml
+  - joblib
+  - tqdm
+  - jupyter
+  - ipykernel
+  - pip:
+      - mlflow
+      - dvc
+      - streamlit
+      - tensorflow
