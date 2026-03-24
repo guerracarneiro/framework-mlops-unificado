@@ -137,3 +137,11 @@ python -m src.clones.gerar_referencia_fase2d_artigo --config-fase2d experiments/
 ## Rodar Multicolinearidade (artigo)
 
 python -m src.clones.run_fase2d_multicolinearidade_artigo --config experiments/clones/fase2d_artigo_replicado.yaml
+
+
+==========================================================================================================
+==========================================================================================================
+
+
+## Ativar Estudo de Caso 02 (mlops_river_level)
+conda activate mlops_river_level

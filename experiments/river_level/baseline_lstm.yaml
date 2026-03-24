@@ -5,17 +5,31 @@ projeto:
 
 dados:
   caminho_arquivo: "data/raw/river_level/2021_NivelRD PIMS_Felipe_V01.xlsm"
-  aba_nivel: "BaseDados"
-  aba_clima: "Clima"
-  estacoes_precipitacao:
-    - "56550005"
-    - "56550017"
-    - "56550019"
-    - "56550021"
+
+  planilha_nivel:
+    nome: "BaseDados"
+    skiprows: 37
+    usecols: [0, 1]
+    coluna_data: "Data"
+    coluna_nivel: "Nivel"
+
+  planilha_clima:
+    nome: "Clima"
+    skiprows: 1
+    usecols: [0, 1, 2, 3]
+    coluna_estacao: "Estacao"
+    coluna_data: "Data"
+    coluna_precipitacao: "Precipitacao"
+    coluna_radiacao: "Radiacao"
+    formato_data: "%d/%m/%Y"
+
+  agregacao_precipitacao:
+    estacoes_interesse: [4, 5, 6, 9]
+    nome_coluna_saida: "Precip_Media_Estacoes"
 
 preprocessamento:
   data_inicio: "2005-01-01"
-  data_fim: "2025-06-30"
+  data_fim: "2026-03-20"
   tratar_evento_2015: true
 
 features:
