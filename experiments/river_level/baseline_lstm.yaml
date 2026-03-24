@@ -39,8 +39,17 @@ features:
   fator_k_api: 0.92
 
 sequencias:
+  caminho_base_features: "data/processed/river_level/dataset_features_baseline_lstm.csv"
+  caminho_dataset_sequencial: "data/processed/river_level/dataset_sequencial_baseline_lstm.npz"
+  caminho_resumo_execucao: "artifacts/river_level/baseline_lstm/sequencias/resumo_sequencias_baseline_lstm.json"
+
+  coluna_alvo: "Nivel"
+  usar_todas_as_colunas_como_entrada: true
+  incluir_alvo_nas_entradas: true
+
   passos_entrada: 180
   horizonte_previsao: 1
+
   proporcao_treino: 0.70
   proporcao_validacao: 0.15
   proporcao_teste: 0.15

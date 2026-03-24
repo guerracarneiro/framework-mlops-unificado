@@ -156,3 +156,7 @@ conda activate mlops_river_level
 ## 1- Executar Engenharia de Features
 
 python -m src.river_level.run_engenharia_features --config experiments/river_level/features/baseline_features.yaml
+
+## 2- Comando para executar a fase 3A
+
+python -m src.river_level.run_preparar_sequencias --config experiments/river_level/baseline_lstm.yaml
