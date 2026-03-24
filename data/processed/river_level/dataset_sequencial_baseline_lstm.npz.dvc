@@ -1,0 +1,5 @@
+outs:
+- md5: a661deb2a0fe7e3c4e9916a3d392cc81
+  size: 2297601
+  hash: md5
+  path: dataset_sequencial_baseline_lstm.npz
