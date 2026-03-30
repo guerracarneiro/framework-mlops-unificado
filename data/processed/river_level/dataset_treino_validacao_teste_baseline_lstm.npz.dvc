@@ -1,0 +1,5 @@
+outs:
+- md5: cee61c7e15a370eff4d412eacc4b1024
+  size: 2282675
+  hash: md5
+  path: dataset_treino_validacao_teste_baseline_lstm.npz

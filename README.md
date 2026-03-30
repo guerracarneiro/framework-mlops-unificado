@@ -157,6 +157,10 @@ conda activate mlops_river_level
 
 python -m src.river_level.run_engenharia_features --config experiments/river_level/features/baseline_features.yaml
 
-## 2- Comando para executar a fase 3A
+## 2- Comando para executar a fase 3A (geração do dataset sequencial)
 
 python -m src.river_level.run_preparar_sequencias --config experiments/river_level/baseline_lstm.yaml
+
+## 3 - Execução da fase 3B (A Fase 3B do Estudo de Caso 2 corresponde ao preparo final dos dados para treinamento da LSTM, a partir do dataset sequencial gerado na Fase 3A.)
+
+python -m src.river_level.run_preparar_treino --config experiments/river_level/baseline_lstm.yaml

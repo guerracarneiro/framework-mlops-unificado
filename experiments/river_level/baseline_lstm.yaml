@@ -50,9 +50,20 @@ sequencias:
   passos_entrada: 180
   horizonte_previsao: 1
 
+preparo_treino:
+  caminho_dataset_sequencial_entrada: "data/processed/river_level/dataset_sequencial_baseline_lstm.npz"
+  caminho_dataset_saida: "data/processed/river_level/dataset_treino_validacao_teste_baseline_lstm.npz"
+
+  caminho_scaler_X: "artifacts/river_level/baseline_lstm/preparo_treino/scaler_X_baseline_lstm.joblib"
+  caminho_scaler_y: "artifacts/river_level/baseline_lstm/preparo_treino/scaler_y_baseline_lstm.joblib"
+  caminho_resumo_execucao: "artifacts/river_level/baseline_lstm/preparo_treino/resumo_preparo_treino_baseline_lstm.json"
+
   proporcao_treino: 0.70
   proporcao_validacao: 0.15
   proporcao_teste: 0.15
+
+  tipo_scaler_X: "minmax"
+  tipo_scaler_y: "minmax"
 
 modelo:
   tipo: "lstm"
