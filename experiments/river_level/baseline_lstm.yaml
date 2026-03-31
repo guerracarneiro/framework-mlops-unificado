@@ -71,6 +71,9 @@ modelo:
   unidades_lstm_2: 64
   dropout: 0.20
   learning_rate: 0.001
+  tipo_loss: "eqm_ponderado" #Para pesar erros no período de baixa (mínima do rio)
+  limiar_perda_ponderada: 2 #1.10
+  peso_perda_ponderada: 3.0
 
 treinamento:
   epochs: 150
