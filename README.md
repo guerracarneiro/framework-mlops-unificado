@@ -165,6 +165,8 @@ python -m src.river_level.run_preparar_sequencias --config experiments/river_lev
 
 python -m src.river_level.run_preparar_treino --config experiments/river_level/baseline_lstm.yaml
 
-## 3 - Execução da fase 4 (A Fase 4 do Estudo de Caso 2 corresponde ao treinamento da baseline LSTM e à avaliação do modelo no conjunto de teste)
+## 4 - Execução da fase 4 (A Fase 4 do Estudo de Caso 2 corresponde ao treinamento da baseline LSTM e à avaliação do modelo no conjunto de teste)
 
 python -m src.river_level.run_experimento_river_level --config experiments/river_level/baseline_lstm.yaml
+
+## 5 - Refatoração Fase 4

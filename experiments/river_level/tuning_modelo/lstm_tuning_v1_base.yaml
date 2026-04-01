@@ -1,0 +1,92 @@
+projeto:
+  nome_experimento_mlflow: "river_level_tuning_modelo"
+  tracking_uri: "sqlite:///mlflow.db"
+  semente_global: 42
+
+execucao:
+  nome_execucao: "lstm_tuning_v1_base"
+  familia_execucao: "tuning_modelo"
+  baseline_referencia: "baseline_lstm"
+  descricao: "Execução base para preparar a estrutura de tuning de hiperparâmetros da LSTM."
+
+dados:
+  caminho_arquivo: "data/raw/river_level/2021_NivelRD PIMS_Felipe_V01.xlsm"
+
+  planilha_nivel:
+    nome: "BaseDados"
+    skiprows: 37
+    usecols: [0, 1]
+    coluna_data: "Data"
+    coluna_nivel: "Nivel"
+
+  planilha_clima:
+    nome: "Clima"
+    skiprows: 1
+    usecols: [0, 1, 2, 3]
+    coluna_estacao: "Estacao"
+    coluna_data: "Data"
+    coluna_precipitacao: "Precipitacao"
+    coluna_radiacao: "Radiacao"
+    formato_data: "%d/%m/%Y"
+
+  agregacao_precipitacao:
+    estacoes_interesse: [4, 5, 6, 9]
+    nome_coluna_saida: "Precip_Media_Estacoes"
+
+preprocessamento:
+  data_inicio: "2005-01-01"
+  data_fim: "2026-03-20"
+  tratar_evento_2015: true
+
+features:
+  janelas_nivel: [3, 7, 15]
+  defasagens: [1, 3, 7, 15, 30, 60, 90]
+  limiares_estiagem: [5, 10, 15]
+  fator_k_api: 0.92
+
+sequencias:
+  caminho_base_features: "data/processed/river_level/dataset_features_baseline_lstm.csv"
+  caminho_dataset_sequencial: "data/processed/river_level/dataset_sequencial_baseline_lstm.npz"
+  caminho_resumo_execucao: "artifacts/river_level/tuning_modelo/lstm_tuning_v1_base/sequencias/resumo_sequencias.json"
+
+  coluna_alvo: "Nivel"
+  usar_todas_as_colunas_como_entrada: true
+  incluir_alvo_nas_entradas: true
+
+  passos_entrada: 180
+  horizonte_previsao: 1
+
+preparo_treino:
+  caminho_dataset_sequencial_entrada: "data/processed/river_level/dataset_sequencial_baseline_lstm.npz"
+  caminho_dataset_saida: "data/processed/river_level/dataset_treino_validacao_teste_baseline_lstm.npz"
+
+  caminho_scaler_X: "artifacts/river_level/baseline_lstm/preparo_treino/scaler_X_baseline_lstm.joblib"
+  caminho_scaler_y: "artifacts/river_level/baseline_lstm/preparo_treino/scaler_y_baseline_lstm.joblib"
+  caminho_resumo_execucao: "artifacts/river_level/tuning_modelo/lstm_tuning_v1_base/preparo_treino/resumo_preparo_treino.json"
+
+  proporcao_treino: 0.70
+  proporcao_validacao: 0.15
+  proporcao_teste: 0.15
+
+  tipo_scaler_X: "minmax"
+  tipo_scaler_y: "minmax"
+
+modelo:
+  tipo: "lstm"
+  unidades_lstm_1: 128
+  unidades_lstm_2: 64
+  dropout: 0.20
+  learning_rate: 0.001
+  tipo_loss: "eqm_ponderado"
+  limiar_perda_ponderada: 2
+  peso_perda_ponderada: 3.0
+
+treinamento:
+  epochs: 150
+  batch_size: 32
+  patience_early_stopping: 15
+
+saidas:
+  pasta_artefatos: "artifacts/river_level/tuning_modelo/lstm_tuning_v1_base"
+  pasta_modelos: "models/river_level/tuning_modelo/lstm_tuning_v1_base"
+  pasta_relatorios: "reports/river_level/tuning_modelo/lstm_tuning_v1_base"
