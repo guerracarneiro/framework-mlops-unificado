@@ -1,4 +1,4 @@
-﻿config_base: "experiments/river_level/tuning_modelo/lstm_tuning_v1_base.yaml"
+config_base: "experiments/river_level/tuning_modelo/lstm_tuning_v1_base.yaml"
 
 execucoes:
   - nome_execucao: "lstm_consolidacao_001_full"

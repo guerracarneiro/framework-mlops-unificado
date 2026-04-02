@@ -1,0 +1,57 @@
+config_base: "experiments/river_level/tuning_modelo/lstm_tuning_v1_base.yaml"
+
+estudo:
+  nome_estudo: "river_level_optuna_v1"
+  direction: "minimize"
+  metrica_objetivo: "melhor_val_loss"
+  n_trials: 12
+  timeout_segundos: null
+
+execucao_base:
+  familia_execucao: "tuning_modelo_optuna"
+  baseline_referencia: "baseline_lstm"
+  descricao: "Busca automatica inicial com Optuna a partir do candidato consolidado 003_full."
+
+espaco_busca:
+  unidades_lstm_1:
+    tipo: "int"
+    low: 96
+    high: 160
+    step: 32
+
+  unidades_lstm_2:
+    tipo: "int"
+    low: 48
+    high: 96
+    step: 16
+
+  dropout:
+    tipo: "float"
+    low: 0.10
+    high: 0.30
+    step: 0.05
+
+  learning_rate:
+    tipo: "float"
+    low: 0.0001
+    high: 0.001
+    log: true
+
+  batch_size:
+    tipo: "categorical"
+    choices: [16, 32, 64]
+
+  peso_perda_ponderada:
+    tipo: "float"
+    low: 2.0
+    high: 4.0
+    step: 0.5
+
+parametros_fixos:
+  modelo:
+    tipo_loss: "eqm_ponderado"
+    limiar_perda_ponderada: 2
+
+  treinamento:
+    epochs: 60
+    patience_early_stopping: 8

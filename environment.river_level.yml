@@ -20,3 +20,4 @@ dependencies:
       - dvc
       - streamlit
       - tensorflow
+      - optuna
