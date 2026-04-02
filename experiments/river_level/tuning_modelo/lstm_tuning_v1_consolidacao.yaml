@@ -1,0 +1,32 @@
+﻿config_base: "experiments/river_level/tuning_modelo/lstm_tuning_v1_base.yaml"
+
+execucoes:
+  - nome_execucao: "lstm_consolidacao_001_full"
+    descricao: "Consolidacao do candidato 001 com treino em regime proximo ao da baseline oficial."
+    modelo:
+      unidades_lstm_1: 128
+      unidades_lstm_2: 64
+      dropout: 0.10
+      learning_rate: 0.001
+      tipo_loss: "eqm_ponderado"
+      limiar_perda_ponderada: 2
+      peso_perda_ponderada: 3.0
+    treinamento:
+      epochs: 150
+      batch_size: 32
+      patience_early_stopping: 15
+
+  - nome_execucao: "lstm_consolidacao_003_full"
+    descricao: "Consolidacao do candidato 003 com treino em regime proximo ao da baseline oficial."
+    modelo:
+      unidades_lstm_1: 128
+      unidades_lstm_2: 64
+      dropout: 0.20
+      learning_rate: 0.0005
+      tipo_loss: "eqm_ponderado"
+      limiar_perda_ponderada: 2
+      peso_perda_ponderada: 3.0
+    treinamento:
+      epochs: 150
+      batch_size: 32
+      patience_early_stopping: 15

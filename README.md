@@ -174,3 +174,4 @@ python -m src.river_level.run_experimento_river_level --config experiments/river
 1. python -m src.river_level.run_treinar_avaliar_modelo --config experiments/river_level/tuning_modelo/lstm_tuning_v1_base.yaml
 2. python -m src.river_level.run_treinar_avaliar_modelo --config experiments/river_level/tuning_modelo/lstm_tuning_v1_smoke.yaml
 3. python -m src.river_level.run_tuning_modelo --config experiments/river_level/tuning_modelo/lstm_tuning_v1_manual.yaml
+4. python -m src.river_level.run_tuning_modelo --config experiments/river_level/tuning_modelo/lstm_tuning_v1_consolidacao.yaml
