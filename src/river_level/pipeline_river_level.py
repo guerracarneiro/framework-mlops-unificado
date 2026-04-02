@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-
+import copy
 import mlflow
 
 from src.river_level.avaliacao import (
@@ -91,6 +91,7 @@ def executar_pipeline_treino_avaliacao(
     executar_treino: bool = True,
     executar_avaliacao: bool = True,
     registrar_mlflow: bool = True,
+    config_override: dict | None = None,
 ) -> dict:
     """
     Núcleo de orquestração do Caso 2 para a trilha genérica.
@@ -101,7 +102,12 @@ def executar_pipeline_treino_avaliacao(
     - registra a execução no MLflow quando solicitado.
     """
     caminho_config = Path(caminho_config)
-    config = ler_yaml(caminho_config)
+
+    if config_override is not None:
+        config = copy.deepcopy(config_override)
+    else:
+        config = ler_yaml(caminho_config)
+
     config["_caminho_config"] = str(caminho_config)
 
     validar_blocos_configuracao(config)

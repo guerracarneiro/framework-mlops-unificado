@@ -1,0 +1,47 @@
+config_base: "experiments/river_level/tuning_modelo/lstm_tuning_v1_base.yaml"
+
+execucoes:
+  - nome_execucao: "lstm_tuning_manual_001"
+    descricao: "Teste com arquitetura igual a base e dropout reduzido."
+    modelo:
+      unidades_lstm_1: 128
+      unidades_lstm_2: 64
+      dropout: 0.10
+      learning_rate: 0.001
+      tipo_loss: "eqm_ponderado"
+      limiar_perda_ponderada: 2
+      peso_perda_ponderada: 3.0
+    treinamento:
+      epochs: 30
+      batch_size: 32
+      patience_early_stopping: 5
+
+  - nome_execucao: "lstm_tuning_manual_002"
+    descricao: "Teste com arquitetura mais enxuta."
+    modelo:
+      unidades_lstm_1: 96
+      unidades_lstm_2: 48
+      dropout: 0.20
+      learning_rate: 0.001
+      tipo_loss: "eqm_ponderado"
+      limiar_perda_ponderada: 2
+      peso_perda_ponderada: 3.0
+    treinamento:
+      epochs: 30
+      batch_size: 32
+      patience_early_stopping: 5
+
+  - nome_execucao: "lstm_tuning_manual_003"
+    descricao: "Teste com learning rate menor."
+    modelo:
+      unidades_lstm_1: 128
+      unidades_lstm_2: 64
+      dropout: 0.20
+      learning_rate: 0.0005
+      tipo_loss: "eqm_ponderado"
+      limiar_perda_ponderada: 2
+      peso_perda_ponderada: 3.0
+    treinamento:
+      epochs: 30
+      batch_size: 32
+      patience_early_stopping: 5
