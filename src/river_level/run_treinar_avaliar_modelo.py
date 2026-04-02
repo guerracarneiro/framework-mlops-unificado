@@ -15,11 +15,13 @@ def executar_treino_avaliacao_modelo(caminho_config: str | Path) -> None:
         caminho_config=caminho_config,
         executar_treino=True,
         executar_avaliacao=True,
+        registrar_mlflow=True,
     )
 
     resumo_execucao = resultado_pipeline["resumo_execucao"]
     resumo_treinamento = resultado_pipeline["resumo_treinamento"]
     resumo_avaliacao = resultado_pipeline["resumo_avaliacao"]
+    run_id = resultado_pipeline["run_id"]
 
     print("Pipeline genérico executado com sucesso.")
     print(f"Configuração carregada:        {resumo_execucao['caminho_config']}")
@@ -60,10 +62,11 @@ def executar_treino_avaliacao_modelo(caminho_config: str | Path) -> None:
         print(f"Viés médio teste:              {resumo_avaliacao['vies_medio_teste']}")
         print(f"NMAE% teste:                   {resumo_avaliacao['nmae_percentual_teste']}")
         print(f"Predições salvas em:           {resumo_avaliacao['caminho_predicoes_teste']}")
-        if "caminho_resumo_avaliacao" in resumo_avaliacao:
-            print(f"Resumo da avaliação salvo em:  {resumo_avaliacao['caminho_resumo_avaliacao']}")
-        else:
-            print("Resumo da avaliação salvo em:  chave não retornada pelo módulo de avaliação")
+        print(f"Resumo da avaliação salvo em:  {resumo_avaliacao['caminho_resumo_avaliacao']}")
+
+    if run_id is not None:
+        print("")
+        print(f"Run MLflow:                    {run_id}")
 
 
 def main() -> None:

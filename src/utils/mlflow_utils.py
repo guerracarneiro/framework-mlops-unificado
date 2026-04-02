@@ -101,3 +101,30 @@ def registrar_varios_artefatos(caminhos: list[str | Path], pasta_destino: str | 
     """
     for caminho in caminhos:
         registrar_artefato(caminho, pasta_destino=pasta_destino)
+
+def registrar_tags_execucao_river_level(config: dict) -> None:
+    """
+    Registra tags específicas para a trilha genérica do estudo de caso 2.
+
+    Esta função não substitui a estratégia da baseline oficial.
+    Ela atende às execuções genéricas de tuning e experimentação.
+    """
+    execucao_cfg = config.get("execucao", {})
+    modelo_cfg = config.get("modelo", {})
+
+    tags = {
+        "caso_estudo": "river_level",
+        "tipo_modelo": str(modelo_cfg.get("tipo", "desconhecido")),
+        "familia_execucao": str(execucao_cfg.get("familia_execucao", "nao_informada")),
+        "pipeline": str(execucao_cfg.get("familia_execucao", "nao_informada")),
+    }
+
+    baseline_referencia = execucao_cfg.get("baseline_referencia")
+    if baseline_referencia is not None:
+        tags["baseline_referencia"] = str(baseline_referencia)
+
+    descricao_execucao = execucao_cfg.get("descricao")
+    if descricao_execucao is not None:
+        tags["descricao_execucao"] = str(descricao_execucao)
+
+    mlflow.set_tags(tags)        
