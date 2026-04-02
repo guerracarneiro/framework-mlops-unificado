@@ -167,20 +167,46 @@ def criar_callbacks_treinamento(config_treinamento: dict, caminhos_saida: dict) 
 
     return callbacks
 
+def obter_identificador_execucao(config: dict) -> str:
+    """
+    Obtém um identificador textual para nomear artefatos da execução.
+
+    Regras:
+    - se existir bloco 'execucao' com 'nome_execucao', usa esse valor;
+    - caso contrário, mantém 'baseline_lstm' para preservar compatibilidade
+      com a baseline oficial já consolidada.
+    """
+    execucao_cfg = config.get("execucao", {})
+    identificador = execucao_cfg.get("nome_execucao", "baseline_lstm")
+    identificador = str(identificador).strip().replace(" ", "_")
+    return identificador
 
 def montar_caminhos_saida_treinamento(config: dict) -> dict:
     """
-    Define os caminhos principais de saída do treino baseline.
+    Define os caminhos principais de saída do treino.
+
+    Mantém compatibilidade com a baseline oficial e gera nomes
+    específicos para execuções genéricas.
     """
     pasta_modelos = Path(config["saidas"]["pasta_modelos"])
     pasta_artefatos = Path(config["saidas"]["pasta_artefatos"]) / "treinamento"
 
-    return {
-        "caminho_modelo_checkpoint": str(pasta_modelos / "modelo_lstm_baseline.keras"),
-        "caminho_log_treinamento": str(pasta_artefatos / "historico_treinamento_baseline.csv"),
-        "caminho_resumo_treinamento": str(pasta_artefatos / "resumo_treinamento_baseline.json"),
-    }
+    identificador_execucao = obter_identificador_execucao(config)
 
+    if identificador_execucao == "baseline_lstm":
+        nome_modelo = "modelo_lstm_baseline.keras"
+        nome_historico = "historico_treinamento_baseline.csv"
+        nome_resumo = "resumo_treinamento_baseline.json"
+    else:
+        nome_modelo = f"modelo_{identificador_execucao}.keras"
+        nome_historico = f"historico_treinamento_{identificador_execucao}.csv"
+        nome_resumo = f"resumo_treinamento_{identificador_execucao}.json"
+
+    return {
+        "caminho_modelo_checkpoint": str(pasta_modelos / nome_modelo),
+        "caminho_log_treinamento": str(pasta_artefatos / nome_historico),
+        "caminho_resumo_treinamento": str(pasta_artefatos / nome_resumo),
+    }
 
 def converter_valor_json(valor):
     """

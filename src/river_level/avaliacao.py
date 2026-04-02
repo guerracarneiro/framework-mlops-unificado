@@ -12,6 +12,7 @@ from src.river_level.treino import (
     carregar_dataset_preparado,
     carregar_scaler_y,
     garantir_pasta_arquivo,
+    obter_identificador_execucao,
 )
 
 
@@ -80,18 +81,31 @@ def montar_dataframe_predicoes(
 
 def montar_caminhos_saida_avaliacao(config: dict) -> dict:
     """
-    Define os caminhos principais de saída da avaliação baseline.
+    Define os caminhos principais de saída da avaliação.
+
+    Mantém compatibilidade com a baseline oficial e gera nomes
+    específicos para execuções genéricas.
     """
     pasta_modelos = Path(config["saidas"]["pasta_modelos"])
     pasta_artefatos = Path(config["saidas"]["pasta_artefatos"]) / "avaliacao"
     pasta_relatorios = Path(config["saidas"]["pasta_relatorios"])
 
-    return {
-        "caminho_modelo": str(pasta_modelos / "modelo_lstm_baseline.keras"),
-        "caminho_resumo_avaliacao": str(pasta_artefatos / "resumo_avaliacao_teste_baseline.json"),
-        "caminho_predicoes_teste": str(pasta_relatorios / "predicoes_teste_baseline.csv"),
-    }
+    identificador_execucao = obter_identificador_execucao(config)
 
+    if identificador_execucao == "baseline_lstm":
+        nome_modelo = "modelo_lstm_baseline.keras"
+        nome_resumo = "resumo_avaliacao_teste_baseline.json"
+        nome_predicoes = "predicoes_teste_baseline.csv"
+    else:
+        nome_modelo = f"modelo_{identificador_execucao}.keras"
+        nome_resumo = f"resumo_avaliacao_teste_{identificador_execucao}.json"
+        nome_predicoes = f"predicoes_teste_{identificador_execucao}.csv"
+
+    return {
+        "caminho_modelo": str(pasta_modelos / nome_modelo),
+        "caminho_resumo_avaliacao": str(pasta_artefatos / nome_resumo),
+        "caminho_predicoes_teste": str(pasta_relatorios / nome_predicoes),
+    }
 
 def converter_valor_json(valor):
     """
@@ -174,6 +188,7 @@ def executar_avaliacao_baseline(config: dict) -> dict:
         "nmae_percentual_teste": metricas["nmae_percentual"],
         "caminho_modelo": caminhos_saida["caminho_modelo"],
         "caminho_predicoes_teste": caminhos_saida["caminho_predicoes_teste"],
+        "caminho_resumo_avaliacao": caminhos_saida["caminho_resumo_avaliacao"],
     }
 
     resumo = {chave: converter_valor_json(valor) for chave, valor in resumo.items()}

@@ -170,3 +170,7 @@ python -m src.river_level.run_preparar_treino --config experiments/river_level/b
 python -m src.river_level.run_experimento_river_level --config experiments/river_level/baseline_lstm.yaml
 
 ## 5 - Refatoração Fase 4
+
+python -m src.river_level.run_treinar_avaliar_modelo --config experiments/river_level/tuning_modelo/lstm_tuning_v1_base.yaml
+python -m src.river_level.run_treinar_avaliar_modelo --config experiments/river_level/tuning_modelo/lstm_tuning_v1_smoke.yaml
+
