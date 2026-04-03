@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+from optuna_integration import TFKerasPruningCallback
 from pathlib import Path
 
 import optuna
@@ -145,6 +146,9 @@ def executar_tuning_optuna(caminho_config: str | Path) -> None:
             trial=trial,
         )
 
+        config_execucao["optuna_trial"] = trial
+        config_execucao["optuna_metrica_monitorada"] = "val_loss"
+
         resultado = executar_pipeline_treino_avaliacao(
             caminho_config=caminho_config_base,
             executar_treino=True,
@@ -177,9 +181,27 @@ def executar_tuning_optuna(caminho_config: str | Path) -> None:
 
         return valor_objetivo
 
+    storage = config_optuna["estudo"].get("storage")
+    load_if_exists = bool(config_optuna["estudo"].get("load_if_exists", True))
+
+    pruning_cfg = config_optuna.get("pruning", {})
+    pruning_ativado = bool(pruning_cfg.get("ativado", False))
+
+    if pruning_ativado:
+        pruner = optuna.pruners.MedianPruner(
+            n_startup_trials=int(pruning_cfg.get("n_startup_trials", 3)),
+            n_warmup_steps=int(pruning_cfg.get("n_warmup_steps", 5)),
+            interval_steps=int(pruning_cfg.get("interval_steps", 1)),
+        )
+    else:
+        pruner = optuna.pruners.NopPruner()
+
     study = optuna.create_study(
         study_name=nome_estudo,
         direction=direction,
+        storage=storage,
+        load_if_exists=load_if_exists,
+        pruner=pruner,
     )
 
     study.optimize(

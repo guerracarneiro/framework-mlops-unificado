@@ -6,6 +6,7 @@ import joblib
 
 import numpy as np
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger
+from optuna_integration import TFKerasPruningCallback
 
 import tensorflow as tf
 
@@ -164,6 +165,17 @@ def criar_callbacks_treinamento(config_treinamento: dict, caminhos_saida: dict) 
             append=False,
         ),
     ]
+
+    trial_optuna = config.get("optuna_trial")
+    metrica_monitorada_optuna = config.get("optuna_metrica_monitorada", "val_loss")
+
+    if trial_optuna is not None:
+        callbacks.append(
+            TFKerasPruningCallback(
+                trial_optuna,
+                metrica_monitorada_optuna,
+            )
+        )
 
     return callbacks
 

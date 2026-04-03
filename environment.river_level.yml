@@ -21,3 +21,4 @@ dependencies:
       - streamlit
       - tensorflow
       - optuna
+      - optuna-integration
