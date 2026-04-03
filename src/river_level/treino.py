@@ -133,10 +133,20 @@ def validar_dataset_preparado(dados: dict) -> None:
         raise ValueError(f"y_teste deve ser 1D. Shape: {dados['y_teste'].shape}")
 
 
-def criar_callbacks_treinamento(config_treinamento: dict, caminhos_saida: dict) -> list:
+def criar_callbacks_treinamento(
+    config_treinamento: dict,
+    caminhos_saida: dict,
+    config: dict | None = None,
+) -> list:
     """
-    Cria os callbacks básicos de treino da baseline.
+    Cria os callbacks de treino.
+
+    Mantém os callbacks padrão usados no treino e, quando a execução
+    vem do Optuna, adiciona também o callback de pruning.
     """
+    if config is None:
+        config = {}
+
     paciencia = int(config_treinamento["patience_early_stopping"])
 
     caminho_modelo_checkpoint = caminhos_saida["caminho_modelo_checkpoint"]
@@ -339,6 +349,7 @@ def executar_treinamento_baseline(config: dict) -> dict:
     callbacks = criar_callbacks_treinamento(
         config_treinamento=config["treinamento"],
         caminhos_saida=caminhos_saida,
+        config=config,
     )
 
     historico = modelo.fit(
