@@ -177,5 +177,5 @@ python -m src.river_level.run_experimento_river_level --config experiments/river
 4. python -m src.river_level.run_tuning_modelo --config experiments/river_level/tuning_modelo/lstm_tuning_v1_consolidacao.yaml
 ### --> Utilizar Optuna
 5. python -m src.river_level.run_tuning_modelo_optuna --config experiments/river_level/tuning_modelo/lstm_optuna_v1.yaml
-
+   
 
